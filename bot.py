@@ -298,4 +298,4 @@ async def on_ready():
     print(f'Команды: !farm_panel, !balance, !top, !фонк, !плейлист, !стоп, !магазин, !купить, !инвентарь, !казино')
 
 # ========== ЗАПУСК ==========
-bot.run('MTQ3NTQ2NjMxNTAyMzI1NzYzMQ.G6VBoa.U68k8HNQyRbRF5sM2PLfJrqXRqZkU4ng7ombj4')
+bot.run(os.getenv('TOKEN'))
