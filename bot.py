@@ -1654,7 +1654,7 @@ async def random_attack():
                 save_oilbases(oil_data)
                 try:
                     owner_user = await bot.fetch_user(int(target_id))
-                    await owner_user.send(f"ТВОЮ НЕФТЕБАЗУ ОГРАБИЛИ БОТЫ! Банда {bandit['name']} {bandit['emoji']} украла {stolen} барр. нефти! Улучши охрану.")
+                    await owner_user.send(f"ТВОЮ НЕФТЕБАЗУ ОГРАБИЛИ БОТЫ Банда {bandit['name']} {bandit['emoji']} украла {stolen} барр. нефти! Улучши охрану.")
                 except:
                     pass
 
