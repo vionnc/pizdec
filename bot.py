@@ -20,6 +20,19 @@ OILBASE_FILE = '/app/data/oilbase_data.json'
 WEAPONS_FILE = '/app/data/weapons_data.json'
 MINE_FILE = '/app/data/mine_data.json'
 
+# ========== СЛУЧАЙНЫЕ СОБЫТИЯ ==========
+active_events = {
+    'mine_boost': 1.0,  # множитель шахты
+    'oil_boost': 1.0,   # множитель нефти
+    'shop_discount': 1.0, # скидка на оружие
+    'rob_boost': 1.0,    # множитель удачи на грабежи
+    'chaos_mode': False, # режим безумия (команды задом наперед)
+    'role_shuffle': False, # перемешивание ролей
+    'tax_event': False,   # налоговое событие активно
+    'event_name': None,
+    'event_time': 0
+}
+
 role_bonuses = {
     'Фонкер': {
         'multiplier': 1.1,
@@ -417,7 +430,8 @@ class WeaponsView(View):
     async def shop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(title="ОРУЖИЕ", color=discord.Color.red())
         for weapon_id, weapon in weapons_shop.items():
-            embed.add_field(name=weapon['name'], value=f"Цена: {weapon['price']} Aura\nБонус: +{weapon['rob_bonus']}%\nID: {weapon_id}", inline=False)
+            price = int(weapon['price'] * active_events['shop_discount'])
+            embed.add_field(name=weapon['name'], value=f"Цена: {price} Aura\nБонус: +{weapon['rob_bonus']}%\nID: {weapon_id}", inline=False)
         await interaction.response.edit_message(embed=embed, view=self)
     
     @discord.ui.button(label="⚔️ Моё оружие", style=discord.ButtonStyle.blurple, custom_id="my_weapons")
@@ -708,7 +722,10 @@ async def balance(ctx):
         await ctx.send("Ты еще не фармил, Используй !farm_panel")
     else:
         bonus = get_user_bonus(ctx.author)
-        await ctx.send(f"{ctx.author.name}, у тебя {data[user_id]['aura']} Aura\nМножитель: x{bonus['multiplier']}\nДневной лимит: {data[user_id].get('daily_farms', 0)}/{bonus['daily_limit']}")
+        event_bonus = ""
+        if active_events['event_name']:
+            event_bonus = f"\nАктивно событие: {active_events['event_name']}"
+        await ctx.send(f"{ctx.author.name}, у тебя {data[user_id]['aura']} Aura\nМножитель: x{bonus['multiplier']}\nДневной лимит: {data[user_id].get('daily_farms', 0)}/{bonus['daily_limit']}{event_bonus}")
 
 @bot.command()
 async def передать(ctx, участник: discord.Member, сумма: int):
@@ -859,7 +876,8 @@ async def налоговая(ctx):
 async def оружейка(ctx):
     embed = discord.Embed(title="ОРУЖЕЙНЫЙ МАГАЗИН", color=discord.Color.red())
     for weapon_id, weapon in weapons_shop.items():
-        embed.add_field(name=weapon['name'], value=f"Цена: {weapon['price']} Aura\nУрон: {weapon['damage']}%\nБонус к ограблению: +{weapon['rob_bonus']}%\n{weapon['description']}\nКупить: !купить_оружие {weapon_id}", inline=False)
+        price = int(weapon['price'] * active_events['shop_discount'])
+        embed.add_field(name=weapon['name'], value=f"Цена: {price} Aura\nУрон: {weapon['damage']}%\nБонус к ограблению: +{weapon['rob_bonus']}%\n{weapon['description']}\nКупить: !купить_оружие {weapon_id}", inline=False)
     await ctx.send(embed=embed)
 
 @bot.command()
@@ -871,8 +889,9 @@ async def купить_оружие(ctx, weapon_id: str):
     user_id = str(ctx.author.id)
     data = load_data()
     weapons_data = load_weapons()
-    if user_id not in data or data[user_id]['aura'] < weapon['price']:
-        await ctx.send(f"Недостаточно Aura! Нужно {weapon['price']}")
+    price = int(weapon['price'] * active_events['shop_discount'])
+    if user_id not in data or data[user_id]['aura'] < price:
+        await ctx.send(f"Недостаточно Aura! Нужно {price}")
         return
     if user_id not in weapons_data:
         weapons_data[user_id] = {'weapons': [], 'successful_robs': 0, 'failed_robs': 0}
@@ -886,7 +905,7 @@ async def купить_оружие(ctx, weapon_id: str):
         'damage': weapon['damage'],
         'rob_bonus': weapon['rob_bonus']
     })
-    data[user_id]['aura'] -= weapon['price']
+    data[user_id]['aura'] -= price
     save_data(data)
     save_weapons(weapons_data)
     await ctx.send(f"Ты купил {weapon['name']}! Теперь можно грабить с бонусом +{weapon['rob_bonus']}%")
@@ -1003,13 +1022,14 @@ async def моя_нефтебаза(ctx):
     security_info = security_levels[oil['security']]
     time_passed = time.time() - oil['last_collect']
     hours_passed = time_passed / 3600
-    potential_income = int(oil['oil'] * 1.5 * hours_passed)
+    oil_price = 100 * active_events['oil_boost']
+    potential_income = int(oil['oil'] * oil_price * hours_passed)
     embed = discord.Embed(title=f"НЕФТЕБАЗА {ctx.author.name}", color=discord.Color.orange())
     embed.add_field(name="Уровень", value=f"{oil['level']} - {level_info['name']}", inline=True)
     embed.add_field(name="Охрана", value=f"{oil['security']} - {security_info['name']} {security_info['emoji']}\nЗащита: {security_info['chance']}%", inline=True)
     embed.add_field(name="Запасы нефти", value=f"{oil['oil']}/{level_info['max_oil']} барр.", inline=True)
     embed.add_field(name="Доступно к продаже", value=f"{potential_income} Aura", inline=True)
-    embed.add_field(name="Цена нефти", value=f"{oil.get('oil_price', 100)} Aura/барр.", inline=True)
+    embed.add_field(name="Цена нефти", value=f"{int(oil_price)} Aura/барр.", inline=True)
     embed.add_field(name="Улучшения", value=f"Улучшить охрану: !улучшить_охрану ({security_levels[oil['security']+1]['price']} Aura если есть)\nПрокачать базу: !прокачать_базу ({level_info['price']} Aura)", inline=False)
     await ctx.send(embed=embed)
 
@@ -1107,7 +1127,7 @@ async def продать_нефть(ctx, количество: int = None):
     time_bonus = int(hours_passed * 10)
     if time_bonus > 200:
         time_bonus = 200
-    price_per_barrel = base_price + time_bonus
+    price_per_barrel = (base_price + time_bonus) * active_events['oil_boost']
     total = количество * price_per_barrel
     bonus = get_user_bonus(ctx.author)
     total = int(total * bonus['multiplier'])
@@ -1116,7 +1136,7 @@ async def продать_нефть(ctx, количество: int = None):
     oil['last_collect'] = time.time()
     save_data(data)
     save_oilbases(oil_data)
-    await ctx.send(f"Продано {количество} барр. нефти по {price_per_barrel} Aura (x{bonus['multiplier']} от роли)\nПолучено: {total} Aura\nОстаток нефти: {oil['oil']} барр.")
+    await ctx.send(f"Продано {количество} барр. нефти по {int(price_per_barrel)} Aura (x{bonus['multiplier']} от роли)\nПолучено: {total} Aura\nОстаток нефти: {oil['oil']} барр.")
 
 @bot.command()
 async def разведка(ctx, владелец: discord.Member):
@@ -1169,7 +1189,7 @@ async def ограбить_нефтебазу(ctx, владелец: discord.Mem
         if stolen <= 0:
             stolen = 1
         target_oil['oil'] -= stolen
-        oil_price = target_oil.get('oil_price', 100)
+        oil_price = 100 * active_events['oil_boost']
         reward = stolen * oil_price
         bonus_mult = get_user_bonus(ctx.author)
         reward = int(reward * bonus_mult['multiplier'])
@@ -1311,8 +1331,9 @@ async def шахта(ctx):
     
     found_resources = []
     for res_id, res in mine_resources.items():
-        if random.randint(1, 100) <= res['chance'] * pickaxe_power:
-            amount = random.randint(1, pickaxe_power)
+        chance = res['chance'] * pickaxe_power * active_events['mine_boost']
+        if random.randint(1, 100) <= chance:
+            amount = random.randint(1, int(pickaxe_power * active_events['mine_boost']))
             mine_data[user_id]['resources'][res_id] += amount
             found_resources.append(f"{res['name']} +{amount}")
     
@@ -1321,7 +1342,8 @@ async def шахта(ctx):
         save_mine(mine_data)
         bonus = get_user_bonus(ctx.author)
         bonus_text = f" (x{bonus['multiplier']} от роли)" if bonus['multiplier'] > 1 else ""
-        await ctx.send(f"Ты нашёл: {', '.join(found_resources)}{bonus_text}\nИспользуй !мои_ресурсы чтобы посмотреть")
+        event_text = f" (x{active_events['mine_boost']} от события)" if active_events['mine_boost'] > 1 else ""
+        await ctx.send(f"Ты нашёл: {', '.join(found_resources)}{bonus_text}{event_text}\nИспользуй !мои_ресурсы чтобы посмотреть")
     else:
         await ctx.send("Ты ничего не нашёл. Попробуй ещё раз")
 
@@ -1656,6 +1678,151 @@ async def random_attack():
                 except:
                     pass
 
+# ========== СЛУЧАЙНЫЕ СОБЫТИЯ ==========
+async def random_events():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        await asyncio.sleep(3600)  # Каждый час
+        
+        # Список событий
+        events = [
+            {
+                'name': 'Пабло в Саратове',
+                'effect': 'скидка 50% на всё оружие на 30 минут',
+                'duration': 1800,
+                'action': 'discount',
+                'value': 0.5
+            },
+            {
+                'name': 'Золотая лихорадка',
+                'effect': 'шахта дает x2 ресурсов на 30 минут',
+                'duration': 1800,
+                'action': 'mine_boost',
+                'value': 2.0
+            },
+            {
+                'name': 'Нефтяной бум',
+                'effect': 'цена нефти x2 на 1 час',
+                'duration': 3600,
+                'action': 'oil_boost',
+                'value': 2.0
+            },
+            {
+                'name': 'Налоговая ревизия',
+                'effect': 'у всех списали 10% ауры',
+                'duration': 0,
+                'action': 'tax'
+            },
+            {
+                'name': 'День ебланойдов',
+                'effect': 'команды работают задом наперед 10 минут',
+                'duration': 600,
+                'action': 'chaos'
+            },
+            {
+                'name': 'Пиздец конкретный',
+                'effect': 'все роли перемешались на 5 минут',
+                'duration': 300,
+                'action': 'shuffle'
+            },
+            {
+                'name': 'Господдержка',
+                'effect': 'каждому по 1000 Aura',
+                'duration': 0,
+                'action': 'giveaway'
+            },
+            {
+                'name': 'Экономический кризис',
+                'effect': 'доход с бизнесов упал на 50% на 1 час',
+                'duration': 3600,
+                'action': 'biz_crisis',
+                'value': 0.5
+            },
+            {
+                'name': 'Дефолт',
+                'effect': 'у кого больше 100к — теряют 10к',
+                'duration': 0,
+                'action': 'default'
+            }
+        ]
+        
+        event = random.choice(events)
+        
+        # Отправляем уведомление
+        for guild in bot.guilds:
+            for channel in guild.text_channels:
+                try:
+                    embed = discord.Embed(
+                        title="СЛУЧАЙНОЕ СОБЫТИЕ",
+                        description=f"**{event['name']}**\n{event['effect']}",
+                        color=discord.Color.purple()
+                    )
+                    await channel.send(embed=embed)
+                    break
+                except:
+                    continue
+        
+        # Применяем эффект
+        if event['action'] == 'tax':
+            data = load_data()
+            for user_id, user_data in data.items():
+                tax = int(user_data['aura'] * 0.1)
+                user_data['aura'] -= tax
+            save_data(data)
+            
+        elif event['action'] == 'giveaway':
+            data = load_data()
+            for user_id, user_data in data.items():
+                user_data['aura'] += 1000
+            save_data(data)
+            
+        elif event['action'] == 'default':
+            data = load_data()
+            for user_id, user_data in data.items():
+                if user_data['aura'] > 100000:
+                    user_data['aura'] -= 10000
+            save_data(data)
+            
+        elif event['action'] == 'discount':
+            active_events['shop_discount'] = event['value']
+            active_events['event_name'] = event['name']
+            active_events['event_time'] = time.time() + event['duration']
+            
+        elif event['action'] == 'mine_boost':
+            active_events['mine_boost'] = event['value']
+            active_events['event_name'] = event['name']
+            active_events['event_time'] = time.time() + event['duration']
+            
+        elif event['action'] == 'oil_boost':
+            active_events['oil_boost'] = event['value']
+            active_events['event_name'] = event['name']
+            active_events['event_time'] = time.time() + event['duration']
+            
+        elif event['action'] == 'chaos':
+            active_events['chaos_mode'] = True
+            active_events['event_name'] = event['name']
+            active_events['event_time'] = time.time() + event['duration']
+            
+        elif event['action'] == 'shuffle':
+            active_events['role_shuffle'] = True
+            active_events['event_name'] = event['name']
+            active_events['event_time'] = time.time() + event['duration']
+        
+        # Ждем окончания события и сбрасываем
+        if event['duration'] > 0:
+            await asyncio.sleep(event['duration'])
+            if event['action'] == 'discount':
+                active_events['shop_discount'] = 1.0
+            elif event['action'] == 'mine_boost':
+                active_events['mine_boost'] = 1.0
+            elif event['action'] == 'oil_boost':
+                active_events['oil_boost'] = 1.0
+            elif event['action'] == 'chaos':
+                active_events['chaos_mode'] = False
+            elif event['action'] == 'shuffle':
+                active_events['role_shuffle'] = False
+            active_events['event_name'] = None
+
 @bot.event
 async def on_ready():
     print(f'Бот {bot.user} запущен!')
@@ -1666,10 +1833,6 @@ async def on_ready():
     print(f'Целей для ограблений: {len(robbery_targets)}')
     print(f'Команды: !farm_panel, !balance, !передать, !топ, !казино, !налоговая, !бизнесы, !оружейка, !цели, !ограбить, !купить_нефтебазу, !моя_нефтебаза, !разведка, !ограбить_нефтебазу, !шахта, !купить_кирку, !мои_ресурсы, !продать_ресурсы, !прокачать_кирку, !меню')
     bot.loop.create_task(random_attack())
-# Тестовое сохранение при запуске
-test_data = {"test": "ok"}
-with open('aura_data.json', 'w') as f:
-    json.dump(test_data, f)
-print("✅ Тестовый файл создан")
+    bot.loop.create_task(random_events())
 
 bot.run(os.getenv('TOKEN'))
