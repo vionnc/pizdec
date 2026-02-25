@@ -257,6 +257,306 @@ def needs_tax_check(user_id):
     return False
 
 class AuraFarmButton(Button):
+class MainMenuView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+    
+    @discord.ui.button(label="💰 Фарм", style=discord.ButtonStyle.green, custom_id="farm")
+    async def farm_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Нажми кнопку AURA FARM ниже", ephemeral=True)
+        await interaction.followup.send(view=FarmPanelView())
+    
+    @discord.ui.button(label="🏢 Бизнесы", style=discord.ButtonStyle.blurple, custom_id="business")
+    async def business_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="БИЗНЕСЫ", color=discord.Color.gold())
+        for biz_id, biz in businesses.items():
+            embed.add_field(name=f"{biz['emoji']} {biz['name']}", value=f"Цена: {biz['price']} Aura\nДоход: {biz['income']} Aura/час", inline=False)
+        await interaction.response.send_message(embed=embed, view=BusinessView(), ephemeral=True)
+    
+    @discord.ui.button(label="🔫 Оружие", style=discord.ButtonStyle.red, custom_id="weapons")
+    async def weapons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🔫 ОРУЖИЕ И ОГРАБЛЕНИЯ", view=WeaponsView(), ephemeral=True)
+    
+    @discord.ui.button(label="🛢️ Нефтебаза", style=discord.ButtonStyle.orange, custom_id="oil")
+    async def oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user_id = str(interaction.user.id)
+        oil_data = load_oilbases()
+        if user_id in oil_data:
+            await interaction.response.send_message("🛢️ УПРАВЛЕНИЕ НЕФТЕБАЗОЙ", view=OilBaseView(), ephemeral=True)
+        else:
+            await interaction.response.send_message("У тебя нет нефтебазы! Купи за 500к", view=BuyOilView(), ephemeral=True)
+    
+    @discord.ui.button(label="⛏️ Шахта", style=discord.ButtonStyle.gray, custom_id="mine")
+    async def mine_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("⛏️ ШАХТА", view=MineView(), ephemeral=True)
+    
+    @discord.ui.button(label="🛒 Магазин", style=discord.ButtonStyle.secondary, custom_id="shop")
+    async def shop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="МАГАЗИН РОЛЕЙ", color=discord.Color.gold())
+        for item_id, item in shop_items.items():
+            embed.add_field(name=item['name'], value=f"Цена: {item['price']} Aura\n{item['description']}", inline=False)
+        await interaction.response.send_message(embed=embed, view=ShopView(), ephemeral=True)
+    
+    @discord.ui.button(label="🎵 Музыка", style=discord.ButtonStyle.success, custom_id="music")
+    async def music_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🎵 МУЗЫКА", view=MusicView(), ephemeral=True)
+    
+    @discord.ui.button(label="🏆 Топы", style=discord.ButtonStyle.blurple, custom_id="top")
+    async def top_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🏆 ВЫБЕРИ ТОП", view=TopView(), ephemeral=True)
+
+class FarmPanelView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+        self.add_item(AuraFarmButton())
+    
+    @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+
+class BusinessView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+    
+    @discord.ui.button(label="📋 Список", style=discord.ButtonStyle.blurple, custom_id="list_biz")
+    async def list_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="БИЗНЕСЫ", color=discord.Color.gold())
+        for biz_id, biz in businesses.items():
+            embed.add_field(name=f"{biz['emoji']} {biz['name']}", value=f"Цена: {biz['price']} Aura\nДоход: {biz['income']} Aura/час\nID: {biz_id}", inline=False)
+        await interaction.response.edit_message(embed=embed, view=self)
+    
+    @discord.ui.button(label="🏪 Купить", style=discord.ButtonStyle.green, custom_id="buy_biz")
+    async def buy_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Напиши !купить_бизнес [id]", ephemeral=True)
+    
+    @discord.ui.button(label="💰 Собрать", style=discord.ButtonStyle.gold, custom_id="collect")
+    async def collect_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await собрать_доход(ctx)
+    
+    @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+
+class WeaponsView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+    
+    @discord.ui.button(label="🔫 Магазин", style=discord.ButtonStyle.red, custom_id="weapon_shop")
+    async def shop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="ОРУЖИЕ", color=discord.Color.red())
+        for weapon_id, weapon in weapons_shop.items():
+            embed.add_field(name=weapon['name'], value=f"Цена: {weapon['price']} Aura\nБонус: +{weapon['rob_bonus']}%\nID: {weapon_id}", inline=False)
+        await interaction.response.edit_message(embed=embed, view=self)
+    
+    @discord.ui.button(label="⚔️ Моё оружие", style=discord.ButtonStyle.blurple, custom_id="my_weapons")
+    async def my_weapons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await моё_оружие(ctx)
+    
+    @discord.ui.button(label="🎯 Цели", style=discord.ButtonStyle.orange, custom_id="targets")
+    async def targets_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await цели(ctx)
+    
+    @discord.ui.button(label="💰 Ограбить", style=discord.ButtonStyle.green, custom_id="rob")
+    async def rob_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Напиши !ограбить [id цели]", ephemeral=True)
+    
+    @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+
+class MineView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+    
+    @discord.ui.button(label="⛏️ Работать", style=discord.ButtonStyle.green, custom_id="mine_work")
+    async def work_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await шахта(ctx)
+    
+    @discord.ui.button(label="🪓 Купить кирку", style=discord.ButtonStyle.blurple, custom_id="buy_pickaxe")
+    async def buy_pickaxe_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await купить_кирку(ctx)
+    
+    @discord.ui.button(label="📦 Ресурсы", style=discord.ButtonStyle.orange, custom_id="resources")
+    async def resources_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await мои_ресурсы(ctx)
+    
+    @discord.ui.button(label="💰 Продать", style=discord.ButtonStyle.gold, custom_id="sell")
+    async def sell_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Напиши !продать_ресурсы или !продать_ресурсы уголь 10", ephemeral=True)
+    
+    @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+
+class OilBaseView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+    
+    @discord.ui.button(label="📊 Статистика", style=discord.ButtonStyle.blurple, custom_id="oil_stats")
+    async def stats_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await моя_нефтебаза(ctx)
+    
+    @discord.ui.button(label="🛡️ Охрана", style=discord.ButtonStyle.red, custom_id="oil_security")
+    async def security_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Напиши !улучшить_охрану", ephemeral=True)
+    
+    @discord.ui.button(label="📈 Прокачка", style=discord.ButtonStyle.green, custom_id="oil_upgrade")
+    async def upgrade_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Напиши !прокачать_базу", ephemeral=True)
+    
+    @discord.ui.button(label="🛢️ Купить нефть", style=discord.ButtonStyle.orange, custom_id="buy_oil")
+    async def buy_oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Напиши !купить_нефть [количество]", ephemeral=True)
+    
+    @discord.ui.button(label="💰 Продать", style=discord.ButtonStyle.gold, custom_id="sell_oil")
+    async def sell_oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Напиши !продать_нефть", ephemeral=True)
+    
+    @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+
+class BuyOilView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+    
+    @discord.ui.button(label="🛢️ Купить нефтебазу", style=discord.ButtonStyle.green, custom_id="buy_oilbase")
+    async def buy_oilbase_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await купить_нефтебазу(ctx)
+    
+    @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+
+class ShopView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+    
+    @discord.ui.button(label="📋 Список", style=discord.ButtonStyle.blurple, custom_id="shop_list")
+    async def list_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="МАГАЗИН РОЛЕЙ", color=discord.Color.gold())
+        for item_id, item in shop_items.items():
+            embed.add_field(name=item['name'], value=f"Цена: {item['price']} Aura\n{item['description']}\nID: {item_id}", inline=False)
+        await interaction.response.edit_message(embed=embed, view=self)
+    
+    @discord.ui.button(label="🛒 Купить", style=discord.ButtonStyle.green, custom_id="shop_buy")
+    async def buy_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Напиши !купить_роль [id]", ephemeral=True)
+    
+    @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+
+class MusicView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+    
+    @discord.ui.button(label="📋 Плейлист", style=discord.ButtonStyle.blurple, custom_id="playlist")
+    async def playlist_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await плейлист(ctx)
+    
+    @discord.ui.button(label="🎵 Случайный", style=discord.ButtonStyle.green, custom_id="random_track")
+    async def random_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await фонк(ctx)
+    
+    @discord.ui.button(label="⏸️ Пауза", style=discord.ButtonStyle.gray, custom_id="pause")
+    async def pause_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await пауза(ctx)
+    
+    @discord.ui.button(label="▶️ Продолжить", style=discord.ButtonStyle.green, custom_id="resume")
+    async def resume_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await продолжить(ctx)
+    
+    @discord.ui.button(label="⏹️ Стоп", style=discord.ButtonStyle.red, custom_id="stop")
+    async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await стоп(ctx)
+    
+    @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+
+class TopView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+    
+    @discord.ui.button(label="💰 По ауре", style=discord.ButtonStyle.gold, custom_id="top_aura")
+    async def aura_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await топ(ctx, "aura")
+    
+    @discord.ui.button(label="🏢 По бизнесам", style=discord.ButtonStyle.blurple, custom_id="top_biz")
+    async def biz_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await топ(ctx, "бизнесы")
+    
+    @discord.ui.button(label="🛢️ По нефтебазам", style=discord.ButtonStyle.orange, custom_id="top_oil")
+    async def oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await топ(ctx, "нефтебазы")
+    
+    @discord.ui.button(label="🔫 По ограблениям", style=discord.ButtonStyle.red, custom_id="top_robs")
+    async def robs_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await топ(ctx, "ограбления")
+    
+    @discord.ui.button(label="⛏️ По шахте", style=discord.ButtonStyle.gray, custom_id="top_mine")
+    async def mine_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ctx = await bot.get_context(interaction.message)
+        ctx.author = interaction.user
+        await топ(ctx, "шахта")
+    
+    @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+
+@bot.command()
+async def меню(ctx):
+    """Открыть главное меню"""
+    embed = discord.Embed(
+        title="🏠 ГЛАВНОЕ МЕНЮ",
+        description="Выбери раздел:",
+        color=discord.Color.blue()
+    )
+    embed.add_field(name="💰 Фарм", value="Кнопка AURA FARM", inline=True)
+    embed.add_field(name="🏢 Бизнесы", value="Купить и собирать доход", inline=True)
+    embed.add_field(name="🔫 Оружие", value="Магазин и ограбления", inline=True)
+    embed.add_field(name="🛢️ Нефтебаза", value="Купить и управлять", inline=True)
+    embed.add_field(name="⛏️ Шахта", value="Добывать ресурсы", inline=True)
+    embed.add_field(name="🛒 Магазин", value="Купить роли", inline=True)
+    embed.add_field(name="🎵 Музыка", value="Включить фонк", inline=True)
+    embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
+    
+    await ctx.send(embed=embed, view=MainMenuView())
     def __init__(self):
         super().__init__(label="AURA FARM", style=discord.ButtonStyle.green)
     
