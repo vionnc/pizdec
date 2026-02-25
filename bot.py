@@ -256,7 +256,61 @@ def needs_tax_check(user_id):
         return True
     return False
 
+# ========== КНОПКА ФАРМА ==========
 class AuraFarmButton(Button):
+    def __init__(self):
+        super().__init__(label="AURA FARM", style=discord.ButtonStyle.green)
+    
+    async def callback(self, interaction: discord.Interaction):
+        user_id = interaction.user.id
+        current_time = time.time()
+        
+        if user_id in last_click:
+            if current_time - last_click[user_id] < 1:
+                await interaction.response.send_message("Не так быстро! Подожди секунду", ephemeral=True, delete_after=2)
+                return
+        
+        last_click[user_id] = current_time
+        
+        if needs_tax_check(user_id):
+            await interaction.response.send_message("Налоговая проверка! Напиши !налоговая в чат", ephemeral=True)
+            return
+        
+        data = load_data()
+        user_id_str = str(user_id)
+        
+        if user_id_str not in data:
+            data[user_id_str] = {
+                'name': interaction.user.name,
+                'aura': 0,
+                'total_farms': 0,
+                'daily_farms': 0,
+                'last_reset': current_time
+            }
+        
+        if current_time - data[user_id_str].get('last_reset', 0) > 86400:
+            data[user_id_str]['daily_farms'] = 0
+            data[user_id_str]['last_reset'] = current_time
+        
+        bonus = get_user_bonus(interaction.user)
+        if data[user_id_str]['daily_farms'] >= bonus['daily_limit']:
+            await interaction.response.send_message("Дневной лимит исчерпан! Завтра продолжишь", ephemeral=True, delete_after=3)
+            return
+        
+        base_amount = random.randint(3, 15)
+        farm_amount = int(base_amount * bonus['multiplier'])
+        
+        data[user_id_str]['aura'] += farm_amount
+        data[user_id_str]['total_farms'] += 1
+        data[user_id_str]['daily_farms'] += 1
+        save_data(data)
+        
+        await interaction.response.send_message(
+            f"Ты нафармил {farm_amount} Aura!\nБаланс: {data[user_id_str]['aura']} Aura\nДневной лимит: {data[user_id_str]['daily_farms']}/{bonus['daily_limit']}",
+            ephemeral=False, delete_after=5
+        )
+
+# ========== МЕНЮ (ВСЕ КЛАССЫ VIEW) ==========
 class MainMenuView(View):
     def __init__(self):
         super().__init__(timeout=60)
@@ -312,7 +366,16 @@ class FarmPanelView(View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+        embed = discord.Embed(title="🏠 ГЛАВНОЕ МЕНЮ", description="Выбери раздел:", color=discord.Color.blue())
+        embed.add_field(name="💰 Фарм", value="Кнопка AURA FARM", inline=True)
+        embed.add_field(name="🏢 Бизнесы", value="Купить и собирать доход", inline=True)
+        embed.add_field(name="🔫 Оружие", value="Магазин и ограбления", inline=True)
+        embed.add_field(name="🛢️ Нефтебаза", value="Купить и управлять", inline=True)
+        embed.add_field(name="⛏️ Шахта", value="Добывать ресурсы", inline=True)
+        embed.add_field(name="🛒 Магазин", value="Купить роли", inline=True)
+        embed.add_field(name="🎵 Музыка", value="Включить фонк", inline=True)
+        embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
+        await interaction.response.edit_message(embed=embed, view=MainMenuView())
 
 class BusinessView(View):
     def __init__(self):
@@ -337,7 +400,16 @@ class BusinessView(View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+        embed = discord.Embed(title="🏠 ГЛАВНОЕ МЕНЮ", description="Выбери раздел:", color=discord.Color.blue())
+        embed.add_field(name="💰 Фарм", value="Кнопка AURA FARM", inline=True)
+        embed.add_field(name="🏢 Бизнесы", value="Купить и собирать доход", inline=True)
+        embed.add_field(name="🔫 Оружие", value="Магазин и ограбления", inline=True)
+        embed.add_field(name="🛢️ Нефтебаза", value="Купить и управлять", inline=True)
+        embed.add_field(name="⛏️ Шахта", value="Добывать ресурсы", inline=True)
+        embed.add_field(name="🛒 Магазин", value="Купить роли", inline=True)
+        embed.add_field(name="🎵 Музыка", value="Включить фонк", inline=True)
+        embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
+        await interaction.response.edit_message(embed=embed, view=MainMenuView())
 
 class WeaponsView(View):
     def __init__(self):
@@ -368,7 +440,16 @@ class WeaponsView(View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+        embed = discord.Embed(title="🏠 ГЛАВНОЕ МЕНЮ", description="Выбери раздел:", color=discord.Color.blue())
+        embed.add_field(name="💰 Фарм", value="Кнопка AURA FARM", inline=True)
+        embed.add_field(name="🏢 Бизнесы", value="Купить и собирать доход", inline=True)
+        embed.add_field(name="🔫 Оружие", value="Магазин и ограбления", inline=True)
+        embed.add_field(name="🛢️ Нефтебаза", value="Купить и управлять", inline=True)
+        embed.add_field(name="⛏️ Шахта", value="Добывать ресурсы", inline=True)
+        embed.add_field(name="🛒 Магазин", value="Купить роли", inline=True)
+        embed.add_field(name="🎵 Музыка", value="Включить фонк", inline=True)
+        embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
+        await interaction.response.edit_message(embed=embed, view=MainMenuView())
 
 class MineView(View):
     def __init__(self):
@@ -398,7 +479,16 @@ class MineView(View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+        embed = discord.Embed(title="🏠 ГЛАВНОЕ МЕНЮ", description="Выбери раздел:", color=discord.Color.blue())
+        embed.add_field(name="💰 Фарм", value="Кнопка AURA FARM", inline=True)
+        embed.add_field(name="🏢 Бизнесы", value="Купить и собирать доход", inline=True)
+        embed.add_field(name="🔫 Оружие", value="Магазин и ограбления", inline=True)
+        embed.add_field(name="🛢️ Нефтебаза", value="Купить и управлять", inline=True)
+        embed.add_field(name="⛏️ Шахта", value="Добывать ресурсы", inline=True)
+        embed.add_field(name="🛒 Магазин", value="Купить роли", inline=True)
+        embed.add_field(name="🎵 Музыка", value="Включить фонк", inline=True)
+        embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
+        await interaction.response.edit_message(embed=embed, view=MainMenuView())
 
 class OilBaseView(View):
     def __init__(self):
@@ -428,7 +518,16 @@ class OilBaseView(View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+        embed = discord.Embed(title="🏠 ГЛАВНОЕ МЕНЮ", description="Выбери раздел:", color=discord.Color.blue())
+        embed.add_field(name="💰 Фарм", value="Кнопка AURA FARM", inline=True)
+        embed.add_field(name="🏢 Бизнесы", value="Купить и собирать доход", inline=True)
+        embed.add_field(name="🔫 Оружие", value="Магазин и ограбления", inline=True)
+        embed.add_field(name="🛢️ Нефтебаза", value="Купить и управлять", inline=True)
+        embed.add_field(name="⛏️ Шахта", value="Добывать ресурсы", inline=True)
+        embed.add_field(name="🛒 Магазин", value="Купить роли", inline=True)
+        embed.add_field(name="🎵 Музыка", value="Включить фонк", inline=True)
+        embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
+        await interaction.response.edit_message(embed=embed, view=MainMenuView())
 
 class BuyOilView(View):
     def __init__(self):
@@ -442,7 +541,16 @@ class BuyOilView(View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+        embed = discord.Embed(title="🏠 ГЛАВНОЕ МЕНЮ", description="Выбери раздел:", color=discord.Color.blue())
+        embed.add_field(name="💰 Фарм", value="Кнопка AURA FARM", inline=True)
+        embed.add_field(name="🏢 Бизнесы", value="Купить и собирать доход", inline=True)
+        embed.add_field(name="🔫 Оружие", value="Магазин и ограбления", inline=True)
+        embed.add_field(name="🛢️ Нефтебаза", value="Купить и управлять", inline=True)
+        embed.add_field(name="⛏️ Шахта", value="Добывать ресурсы", inline=True)
+        embed.add_field(name="🛒 Магазин", value="Купить роли", inline=True)
+        embed.add_field(name="🎵 Музыка", value="Включить фонк", inline=True)
+        embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
+        await interaction.response.edit_message(embed=embed, view=MainMenuView())
 
 class ShopView(View):
     def __init__(self):
@@ -461,7 +569,16 @@ class ShopView(View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+        embed = discord.Embed(title="🏠 ГЛАВНОЕ МЕНЮ", description="Выбери раздел:", color=discord.Color.blue())
+        embed.add_field(name="💰 Фарм", value="Кнопка AURA FARM", inline=True)
+        embed.add_field(name="🏢 Бизнесы", value="Купить и собирать доход", inline=True)
+        embed.add_field(name="🔫 Оружие", value="Магазин и ограбления", inline=True)
+        embed.add_field(name="🛢️ Нефтебаза", value="Купить и управлять", inline=True)
+        embed.add_field(name="⛏️ Шахта", value="Добывать ресурсы", inline=True)
+        embed.add_field(name="🛒 Магазин", value="Купить роли", inline=True)
+        embed.add_field(name="🎵 Музыка", value="Включить фонк", inline=True)
+        embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
+        await interaction.response.edit_message(embed=embed, view=MainMenuView())
 
 class MusicView(View):
     def __init__(self):
@@ -499,7 +616,16 @@ class MusicView(View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+        embed = discord.Embed(title="🏠 ГЛАВНОЕ МЕНЮ", description="Выбери раздел:", color=discord.Color.blue())
+        embed.add_field(name="💰 Фарм", value="Кнопка AURA FARM", inline=True)
+        embed.add_field(name="🏢 Бизнесы", value="Купить и собирать доход", inline=True)
+        embed.add_field(name="🔫 Оружие", value="Магазин и ограбления", inline=True)
+        embed.add_field(name="🛢️ Нефтебаза", value="Купить и управлять", inline=True)
+        embed.add_field(name="⛏️ Шахта", value="Добывать ресурсы", inline=True)
+        embed.add_field(name="🛒 Магазин", value="Купить роли", inline=True)
+        embed.add_field(name="🎵 Музыка", value="Включить фонк", inline=True)
+        embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
+        await interaction.response.edit_message(embed=embed, view=MainMenuView())
 
 class TopView(View):
     def __init__(self):
@@ -537,7 +663,25 @@ class TopView(View):
     
     @discord.ui.button(label="◀️ Назад", style=discord.ButtonStyle.secondary, custom_id="back")
     async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="🏠 ГЛАВНОЕ МЕНЮ", view=MainMenuView())
+        embed = discord.Embed(title="🏠 ГЛАВНОЕ МЕНЮ", description="Выбери раздел:", color=discord.Color.blue())
+        embed.add_field(name="💰 Фарм", value="Кнопка AURA FARM", inline=True)
+        embed.add_field(name="🏢 Бизнесы", value="Купить и собирать доход", inline=True)
+        embed.add_field(name="🔫 Оружие", value="Магазин и ограбления", inline=True)
+        embed.add_field(name="🛢️ Нефтебаза", value="Купить и управлять", inline=True)
+        embed.add_field(name="⛏️ Шахта", value="Добывать ресурсы", inline=True)
+        embed.add_field(name="🛒 Магазин", value="Купить роли", inline=True)
+        embed.add_field(name="🎵 Музыка", value="Включить фонк", inline=True)
+        embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
+        await interaction.response.edit_message(embed=embed, view=MainMenuView())
+
+# ========== ОСНОВНЫЕ КОМАНДЫ ==========
+@bot.command()
+async def farm_panel(ctx):
+    button = AuraFarmButton()
+    view = View(timeout=None)
+    view.add_item(button)
+    embed = discord.Embed(title="AURA FARMING", description="Нажми на кнопку чтобы фармить ауру", color=discord.Color.purple())
+    await ctx.send(embed=embed, view=view)
 
 @bot.command()
 async def меню(ctx):
@@ -557,65 +701,6 @@ async def меню(ctx):
     embed.add_field(name="🏆 Топы", value="Рейтинги игроков", inline=True)
     
     await ctx.send(embed=embed, view=MainMenuView())
-    def __init__(self):
-        super().__init__(label="AURA FARM", style=discord.ButtonStyle.green)
-    
-    async def callback(self, interaction: discord.Interaction):
-        user_id = interaction.user.id
-        current_time = time.time()
-        
-        if user_id in last_click:
-            if current_time - last_click[user_id] < 1:
-                await interaction.response.send_message("Не так быстро! Подожди секунду", ephemeral=True, delete_after=2)
-                return
-        
-        last_click[user_id] = current_time
-        
-        if needs_tax_check(user_id):
-            await interaction.response.send_message("Налоговая проверка! Напиши !налоговая в чат", ephemeral=True)
-            return
-        
-        data = load_data()
-        user_id_str = str(user_id)
-        
-        if user_id_str not in data:
-            data[user_id_str] = {
-                'name': interaction.user.name,
-                'aura': 0,
-                'total_farms': 0,
-                'daily_farms': 0,
-                'last_reset': current_time
-            }
-        
-        if current_time - data[user_id_str].get('last_reset', 0) > 86400:
-            data[user_id_str]['daily_farms'] = 0
-            data[user_id_str]['last_reset'] = current_time
-        
-        bonus = get_user_bonus(interaction.user)
-        if data[user_id_str]['daily_farms'] >= bonus['daily_limit']:
-            await interaction.response.send_message("Дневной лимит исчерпан! Завтра продолжишь", ephemeral=True, delete_after=3)
-            return
-        
-        base_amount = random.randint(3, 15)
-        farm_amount = int(base_amount * bonus['multiplier'])
-        
-        data[user_id_str]['aura'] += farm_amount
-        data[user_id_str]['total_farms'] += 1
-        data[user_id_str]['daily_farms'] += 1
-        save_data(data)
-        
-        await interaction.response.send_message(
-            f"Ты нафармил {farm_amount} Aura!\nБаланс: {data[user_id_str]['aura']} Aura\nДневной лимит: {data[user_id_str]['daily_farms']}/{bonus['daily_limit']}",
-            ephemeral=False, delete_after=5
-        )
-
-@bot.command()
-async def farm_panel(ctx):
-    button = AuraFarmButton()
-    view = View(timeout=None)
-    view.add_item(button)
-    embed = discord.Embed(title="AURA FARMING", description="Нажми на кнопку чтобы фармить ауру", color=discord.Color.purple())
-    await ctx.send(embed=embed, view=view)
 
 @bot.command()
 async def balance(ctx):
@@ -1581,7 +1666,7 @@ async def on_ready():
     print(f'Ролей с бонусами: {len(role_bonuses)}')
     print(f'Оружия: {len(weapons_shop)}')
     print(f'Целей для ограблений: {len(robbery_targets)}')
-    print(f'Команды: !farm_panel, !balance, !передать, !топ, !казино, !налоговая, !бизнесы, !оружейка, !цели, !ограбить, !купить_нефтебазу, !моя_нефтебаза, !разведка, !ограбить_нефтебазу, !шахта, !купить_кирку, !мои_ресурсы, !продать_ресурсы, !прокачать_кирку')
+    print(f'Команды: !farm_panel, !balance, !передать, !топ, !казино, !налоговая, !бизнесы, !оружейка, !цели, !ограбить, !купить_нефтебазу, !моя_нефтебаза, !разведка, !ограбить_нефтебазу, !шахта, !купить_кирку, !мои_ресурсы, !продать_ресурсы, !прокачать_кирку, !меню')
     bot.loop.create_task(random_attack())
 
 bot.run(os.getenv('TOKEN'))
