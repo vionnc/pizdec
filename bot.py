@@ -296,7 +296,7 @@ class AuraFarmButton(Button):
             await interaction.response.send_message("Дневной лимит исчерпан! Завтра продолжишь", ephemeral=True, delete_after=3)
             return
         
-        base_amount = random.randint(3, 40)
+        base_amount = random.randint(3, 15)
         farm_amount = int(base_amount * bonus['multiplier'])
         
         data[user_id_str]['aura'] += farm_amount
