@@ -1823,6 +1823,43 @@ async def random_events():
                 active_events['role_shuffle'] = False
             active_events['event_name'] = None
 
+# ========== КОМАНДА ДЛЯ ПРОСМОТРА СОБЫТИЙ ==========
+@bot.command()
+async def события(ctx):
+    """Показать текущее активное событие"""
+    if active_events['event_name']:
+        time_left = int(active_events['event_time'] - time.time())
+        minutes = time_left // 60
+        seconds = time_left % 60
+        
+        event_info = ""
+        if active_events['shop_discount'] != 1.0:
+            event_info = f"Скидка на оружие: {int((1-active_events['shop_discount'])*100)}%"
+        elif active_events['mine_boost'] != 1.0:
+            event_info = f"Множитель шахты: x{active_events['mine_boost']}"
+        elif active_events['oil_boost'] != 1.0:
+            event_info = f"Множитель нефти: x{active_events['oil_boost']}"
+        elif active_events['chaos_mode']:
+            event_info = "Команды работают задом наперед"
+        elif active_events['role_shuffle']:
+            event_info = "Роли перемешаны"
+        else:
+            event_info = "Мгновенное событие уже прошло"
+        
+        embed = discord.Embed(
+            title="ТЕКУЩЕЕ СОБЫТИЕ",
+            description=f"**{active_events['event_name']}**",
+            color=discord.Color.purple()
+        )
+        embed.add_field(name="Эффект", value=event_info, inline=False)
+        if time_left > 0:
+            embed.add_field(name="Осталось", value=f"{minutes} мин {seconds} сек", inline=False)
+        
+        await ctx.send(embed=embed)
+    else:
+        await ctx.send("Сейчас нет активных событий. Следующее событие через ~60 минут.")
+
+# ========== ЗАПУСК ==========
 @bot.event
 async def on_ready():
     print(f'Бот {bot.user} запущен!')
@@ -1831,7 +1868,7 @@ async def on_ready():
     print(f'Ролей с бонусами: {len(role_bonuses)}')
     print(f'Оружия: {len(weapons_shop)}')
     print(f'Целей для ограблений: {len(robbery_targets)}')
-    print(f'Команды: !farm_panel, !balance, !передать, !топ, !казино, !налоговая, !бизнесы, !оружейка, !цели, !ограбить, !купить_нефтебазу, !моя_нефтебаза, !разведка, !ограбить_нефтебазу, !шахта, !купить_кирку, !мои_ресурсы, !продать_ресурсы, !прокачать_кирку, !меню')
+    print(f'Команды: !farm_panel, !balance, !передать, !топ, !казино, !налоговая, !бизнесы, !оружейка, !цели, !ограбить, !купить_нефтебазу, !моя_нефтебаза, !разведка, !ограбить_нефтебазу, !шахта, !купить_кирку, !мои_ресурсы, !продать_ресурсы, !прокачать_кирку, !меню, !события')
     bot.loop.create_task(random_attack())
     bot.loop.create_task(random_events())
 
