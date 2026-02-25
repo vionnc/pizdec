@@ -331,7 +331,7 @@ class MainMenuView(View):
     async def weapons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("🔫 ОРУЖИЕ И ОГРАБЛЕНИЯ", view=WeaponsView(), ephemeral=True)
     
-    @discord.ui.button(label="🛢️ Нефтебаза", discord.ButtonStyle.blurple, custom_id="oil")
+    @discord.ui.button(label="🛢️ Нефтебаза", style=discord.ButtonStyle.blurple, custom_id="oil")
     async def oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = str(interaction.user.id)
         oil_data = load_oilbases()
