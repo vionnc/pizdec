@@ -19,6 +19,7 @@ INVENTORY_FILE = 'inventory_data.json'
 BUSINESS_FILE = 'business_data.json'
 OILBASE_FILE = 'oilbase_data.json'
 WEAPONS_FILE = 'weapons_data.json'
+MINE_FILE = 'mine_data.json'
 MUSIC_FOLDER = 'aura_phonk'
 
 role_bonuses = {
@@ -156,13 +157,30 @@ security_levels = {
     1: {'name': 'Нанятые бомжи', 'chance': 10, 'price': 0, 'emoji': '🧟'},
     2: {'name': 'Охранники с дубинками', 'chance': 25, 'price': 20000, 'emoji': '👮'},
     3: {'name': 'ЧОП с пистолетами', 'chance': 40, 'price': 50000, 'emoji': '🔫'},
-    4: {'name': 'Спецназ', 'chance': 60, 'price': 100000, 'emoji': '🛡️'},
+    4: {'name': 'Спецназ Скебоба', 'chance': 60, 'price': 100000, 'emoji': '🛡️'},
     5: {'name': 'Частная армия', 'chance': 75, 'price': 200000, 'emoji': '💂'},
-    6: {'name': 'Роботы-терминаторы', 'chance': 85, 'price': 500000, 'emoji': '🤖'},
+    6: {'name': 'Роботы-терминаторы фурри-ебы', 'chance': 85, 'price': 500000, 'emoji': '🤖'},
     7: {'name': 'Система ПРО', 'chance': 92, 'price': 1000000, 'emoji': '🛸'},
     8: {'name': 'Невидимость', 'chance': 97, 'price': 2000000, 'emoji': '👻'},
     9: {'name': 'Сдвиг реальности', 'chance': 99, 'price': 5000000, 'emoji': '🌀'},
-    10: {'name': 'Божественная защита', 'chance': 100, 'price': 10000000, 'emoji': '😇'}
+    10: {'name': 'Аллах', 'chance': 100, 'price': 10000000, 'emoji': '😇'}
+}
+
+mine_resources = {
+    'coal': {'name': 'Уголь', 'price': 100, 'chance': 50, 'emoji': '🪨'},
+    'iron': {'name': 'Железо', 'price': 300, 'chance': 30, 'emoji': '⚙️'},
+    'gold': {'name': 'Золото', 'price': 1000, 'chance': 15, 'emoji': '🪙'},
+    'diamond': {'name': 'Алмазы', 'price': 5000, 'chance': 5, 'emoji': '💎'}
+}
+
+pickaxe_levels = {
+    1: {'name': 'Деревянная кирка', 'power': 1, 'price': 1000, 'emoji': '🪓'},
+    2: {'name': 'Каменная кирка', 'power': 2, 'price': 2000, 'emoji': '⛏️'},
+    3: {'name': 'Железная кирка', 'power': 3, 'price': 5000, 'emoji': '⚒️'},
+    4: {'name': 'Золотая кирка(хуета)', 'power': 4, 'price': 10000, 'emoji': '🔨'},
+    5: {'name': 'Алмазная кирка', 'power': 5, 'price': 20000, 'emoji': '💎'},
+    6: {'name': 'Мифриловая кирка(Made by Denis Mothers', 'power': 7, 'price': 50000, 'emoji': '🔮'},
+    7: {'name': 'Драконья кирка(Made By FurryEbs)', 'power': 10, 'price': 100000, 'emoji': '🐉'}
 }
 
 last_click = {}
@@ -210,6 +228,17 @@ def load_weapons():
 
 def save_weapons(data):
     with open(WEAPONS_FILE, 'w') as f:
+        json.dump(data, f, indent=4)
+
+def load_mine():
+    try:
+        with open(MINE_FILE, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+def save_mine(data):
+    with open(MINE_FILE, 'w') as f:
         json.dump(data, f, indent=4)
 
 def get_user_bonus(member):
@@ -330,6 +359,7 @@ async def топ(ctx, категория: str = "aura"):
     biz_data = load_businesses()
     oil_data = load_oilbases()
     weapons_data = load_weapons()
+    mine_data = load_mine()
     
     if категория.lower() == "aura":
         sorted_users = sorted(data.items(), key=lambda x: x[1]['aura'], reverse=True)[:10]
@@ -362,8 +392,15 @@ async def топ(ctx, категория: str = "aura"):
                 rob_count[uid] = wep.get('successful_robs', 0)
         sorted_users = sorted(rob_count.items(), key=lambda x: x[1], reverse=True)[:10]
         title = "Топ по ограблениям"
+    elif категория.lower() == "шахта":
+        mine_level = {}
+        for uid, mine in mine_data.items():
+            if uid in data:
+                mine_level[uid] = mine.get('pickaxe', 1)
+        sorted_users = sorted(mine_level.items(), key=lambda x: x[1], reverse=True)[:10]
+        title = "Топ по шахте"
     else:
-        await ctx.send("Доступные категории: aura, farms, бизнесы, нефтебазы, ограбления")
+        await ctx.send("Доступные категории: aura, farms, бизнесы, нефтебазы, ограбления, шахта")
         return
     
     embed = discord.Embed(title=title, color=discord.Color.gold())
@@ -383,6 +420,11 @@ async def топ(ctx, категория: str = "aura"):
             user = await bot.fetch_user(int(user_id))
             prefix = "1." if i == 1 else "2." if i == 2 else "3." if i == 3 else f"{i}."
             embed.add_field(name=f"{prefix} {user.name}", value=f"Ограблений: {count}", inline=False)
+    elif категория.lower() == "шахта":
+        for i, (user_id, level) in enumerate(sorted_users, 1):
+            user = await bot.fetch_user(int(user_id))
+            prefix = "1." if i == 1 else "2." if i == 2 else "3." if i == 3 else f"{i}."
+            embed.add_field(name=f"{prefix} {user.name}", value=f"Кирка {level} уровня", inline=False)
     else:
         for i, (user_id, user_data) in enumerate(sorted_users, 1):
             user = await bot.fetch_user(int(user_id))
@@ -845,6 +887,226 @@ async def собрать_доход(ctx):
         next_time = int((biz_info['cooldown'] - (current_time - biz['last_collect'])) / 60)
         await ctx.send(f"Ещё рано собирать доход! Подожди {next_time} минут")
 
+# ========== ШАХТА ==========
+@bot.command()
+async def шахта(ctx):
+    """Пойти работать в шахту"""
+    user_id = str(ctx.author.id)
+    data = load_data()
+    mine_data = load_mine()
+    
+    if user_id not in mine_data:
+        mine_data[user_id] = {
+            'pickaxe': 1,
+            'resources': {
+                'coal': 0,
+                'iron': 0,
+                'gold': 0,
+                'diamond': 0
+            },
+            'last_mine': 0
+        }
+    
+    current_time = time.time()
+    if current_time - mine_data[user_id]['last_mine'] < 300:
+        remaining = 300 - (current_time - mine_data[user_id]['last_mine'])
+        minutes = int(remaining / 60)
+        seconds = int(remaining % 60)
+        await ctx.send(f"Ты устал! Отдохни ещё {minutes} мин {seconds} сек")
+        return
+    
+    pickaxe_level = mine_data[user_id]['pickaxe']
+    pickaxe_power = pickaxe_levels[pickaxe_level]['power']
+    
+    collapse_chance = 5
+    if random.randint(1, 100) <= collapse_chance:
+        damage = random.randint(1, 5)
+        mine_data[user_id]['pickaxe'] = max(1, pickaxe_level - damage)
+        save_mine(mine_data)
+        await ctx.send(f"ОБВАЛ! Ты потерял {damage} уровня кирки! Теперь кирка {mine_data[user_id]['pickaxe']} уровня")
+        return
+    
+    found_resources = []
+    for res_id, res in mine_resources.items():
+        if random.randint(1, 100) <= res['chance'] * pickaxe_power:
+            amount = random.randint(1, pickaxe_power)
+            mine_data[user_id]['resources'][res_id] += amount
+            found_resources.append(f"{res['name']} +{amount}")
+    
+    if found_resources:
+        mine_data[user_id]['last_mine'] = current_time
+        save_mine(mine_data)
+        bonus = get_user_bonus(ctx.author)
+        bonus_text = f" (x{bonus['multiplier']} от роли)" if bonus['multiplier'] > 1 else ""
+        await ctx.send(f"Ты нашёл: {', '.join(found_resources)}{bonus_text}\nИспользуй !мои_ресурсы чтобы посмотреть")
+    else:
+        await ctx.send("Ты ничего не нашёл. Попробуй ещё раз")
+
+@bot.command()
+async def купить_кирку(ctx):
+    """Купить кирку (900)"""
+    user_id = str(ctx.author.id)
+    data = load_data()
+    mine_data = load_mine()
+    
+    if user_id not in data or data[user_id]['aura'] < 900:
+        await ctx.send("Недостаточно Aura! Нужно 900")
+        return
+    
+    if user_id not in mine_data:
+        mine_data[user_id] = {
+            'pickaxe': 1,
+            'resources': {
+                'coal': 0,
+                'iron': 0,
+                'gold': 0,
+                'diamond': 0
+            },
+            'last_mine': 0
+        }
+    else:
+        if mine_data[user_id]['pickaxe'] >= 7:
+            await ctx.send("У тебя уже максимальная кирка!")
+            return
+        mine_data[user_id]['pickaxe'] += 1
+    
+    data[user_id]['aura'] -= 900
+    save_data(data)
+    save_mine(mine_data)
+    
+    level = mine_data[user_id]['pickaxe']
+    await ctx.send(f"Ты купил {pickaxe_levels[level]['name']}! Теперь кирка {level} уровня")
+
+@bot.command()
+async def мои_ресурсы(ctx):
+    """Посмотреть свои ресурсы"""
+    user_id = str(ctx.author.id)
+    mine_data = load_mine()
+    
+    if user_id not in mine_data:
+        await ctx.send("У тебя нет ресурсов! Сходи в !шахта")
+        return
+    
+    resources = mine_data[user_id]['resources']
+    pickaxe = mine_data[user_id]['pickaxe']
+    
+    embed = discord.Embed(title=f"Ресурсы {ctx.author.name}", color=discord.Color.brown())
+    embed.add_field(name="Кирка", value=f"{pickaxe_levels[pickaxe]['name']} ({pickaxe} ур.)", inline=False)
+    
+    res_list = ""
+    total_value = 0
+    for res_id, res in mine_resources.items():
+        amount = resources.get(res_id, 0)
+        value = amount * res['price']
+        total_value += value
+        res_list += f"{res['emoji']} {res['name']}: {amount} шт. ({value} Aura)\n"
+    
+    embed.add_field(name="Ресурсы", value=res_list, inline=False)
+    embed.add_field(name="Общая стоимость", value=f"{total_value} Aura", inline=False)
+    embed.add_field(name="Команды", value="!продать_ресурсы - продать всё\n!продать_уголь 10 - продать 10 угля", inline=False)
+    
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def продать_ресурсы(ctx, ресурс: str = None, количество: int = None):
+    """Продать ресурсы: !продать_ресурсы уголь 10"""
+    user_id = str(ctx.author.id)
+    data = load_data()
+    mine_data = load_mine()
+    
+    if user_id not in mine_data:
+        await ctx.send("У тебя нет ресурсов!")
+        return
+    
+    if ресурс is None:
+        total = 0
+        sold_items = []
+        for res_id, res in mine_resources.items():
+            amount = mine_data[user_id]['resources'].get(res_id, 0)
+            if amount > 0:
+                value = amount * res['price']
+                total += value
+                mine_data[user_id]['resources'][res_id] = 0
+                sold_items.append(f"{amount} {res['name']} на {value} Aura")
+        
+        if total == 0:
+            await ctx.send("У тебя нет ресурсов для продажи!")
+            return
+        
+        bonus = get_user_bonus(ctx.author)
+        total = int(total * bonus['multiplier'])
+        data[user_id]['aura'] += total
+        save_data(data)
+        save_mine(mine_data)
+        
+        await ctx.send(f"Продано: {', '.join(sold_items)}\nПолучено: {total} Aura (x{bonus['multiplier']} от роли)")
+        return
+    
+    res_map = {
+        'уголь': 'coal',
+        'железо': 'iron',
+        'золото': 'gold',
+        'алмазы': 'diamond'
+    }
+    
+    if ресурс.lower() not in res_map:
+        await ctx.send("Доступные ресурсы: уголь, железо, золото, алмазы")
+        return
+    
+    res_id = res_map[ресурс.lower()]
+    res = mine_resources[res_id]
+    available = mine_data[user_id]['resources'].get(res_id, 0)
+    
+    if количество is None:
+        количество = available
+    elif количество > available:
+        количество = available
+    
+    if количество <= 0:
+        await ctx.send(f"У тебя нет {ресурс} для продажи!")
+        return
+    
+    value = количество * res['price']
+    bonus = get_user_bonus(ctx.author)
+    total = int(value * bonus['multiplier'])
+    
+    mine_data[user_id]['resources'][res_id] -= количество
+    data[user_id]['aura'] += total
+    save_data(data)
+    save_mine(mine_data)
+    
+    await ctx.send(f"Продано {количество} {res['name']} за {total} Aura (x{bonus['multiplier']} от роли)")
+
+@bot.command()
+async def прокачать_кирку(ctx):
+    """Улучшить кирку"""
+    user_id = str(ctx.author.id)
+    data = load_data()
+    mine_data = load_mine()
+    
+    if user_id not in mine_data:
+        await ctx.send("Сначала купи кирку через !купить_кирку")
+        return
+    
+    current_level = mine_data[user_id]['pickaxe']
+    if current_level >= 7:
+        await ctx.send("У тебя уже максимальная кирка!")
+        return
+    
+    next_level = current_level + 1
+    price = pickaxe_levels[next_level]['price']
+    
+    if data[user_id]['aura'] < price:
+        await ctx.send(f"Недостаточно Aura! Нужно {price}")
+        return
+    
+    data[user_id]['aura'] -= price
+    mine_data[user_id]['pickaxe'] = next_level
+    save_data(data)
+    save_mine(mine_data)
+    
+    await ctx.send(f"Кирка улучшена до {next_level} уровня: {pickaxe_levels[next_level]['name']}")
+
 shop_items = {
     'fonker': {
         'name': 'Фонкер',
@@ -984,11 +1246,11 @@ async def random_attack():
         target_id = random.choice(list(oil_data.keys()))
         target_oil = oil_data[target_id]
         bandits = [
-            {'name': 'Гопники', 'power': 10, 'emoji': '🧟'},
+            {'name': 'Гопники Хуёпники', 'power': 10, 'emoji': '🧟'},
             {'name': 'Бандиты', 'power': 30, 'emoji': '🔫'},
-            {'name': 'Мафия', 'power': 50, 'emoji': '🕴️'},
-            {'name': 'Спецслужбы', 'power': 70, 'emoji': '🕵️'},
-            {'name': 'Конкуренты', 'power': 90, 'emoji': '💼'}
+            {'name': 'Мафия Bobrito Pidorito', 'power': 50, 'emoji': '🕴️'},
+            {'name': 'Спецслужбы SOBR ', 'power': 70, 'emoji': '🕵️'},
+            {'name': 'Конкуренты Eblans INC', 'power': 90, 'emoji': '💼'}
         ]
         bandit = random.choice(bandits)
         if random.randint(1, 100) <= 20:
@@ -996,7 +1258,7 @@ async def random_attack():
             if random.randint(1, 100) <= security_chance:
                 try:
                     owner_user = await bot.fetch_user(int(target_id))
-                    await owner_user.send(f"ТВОЮ НЕФТЕБАЗУ АТАКОВАЛИ Банда {bandit['name']} {bandit['emoji']} напала, но охрана справилась!")
+                    await owner_user.send(f"ТВОЮ НЕФТЕБАЗУ АТАКОВАЛИ! Банда {bandit['name']} {bandit['emoji']} напала, но охрана справилась!")
                 except:
                     pass
             else:
@@ -1019,7 +1281,7 @@ async def on_ready():
     print(f'Ролей с бонусами: {len(role_bonuses)}')
     print(f'Оружия: {len(weapons_shop)}')
     print(f'Целей для ограблений: {len(robbery_targets)}')
-    print(f'Команды: !farm_panel, !balance, !передать, !топ, !казино, !налоговая, !бизнесы, !оружейка, !цели, !ограбить, !купить_нефтебазу, !моя_нефтебаза, !разведка, !ограбить_нефтебазу')
+    print(f'Команды: !farm_panel, !balance, !передать, !топ, !казино, !налоговая, !бизнесы, !оружейка, !цели, !ограбить, !купить_нефтебазу, !моя_нефтебаза, !разведка, !ограбить_нефтебазу, !шахта, !купить_кирку, !мои_ресурсы, !продать_ресурсы, !прокачать_кирку')
     bot.loop.create_task(random_attack())
 
 bot.run(os.getenv('TOKEN'))
