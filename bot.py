@@ -392,7 +392,7 @@ class BusinessView(View):
     async def buy_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Напиши !купить_бизнес [id]", ephemeral=True)
     
-    @discord.ui.button(label="💰 Собрать", style=discord.ButtonStyle.gold, custom_id="collect")
+    @discord.ui.button(label="💰 Собрать", style=discord.ButtonStyle.blurple, custom_id="collect")
     async def collect_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
@@ -473,7 +473,7 @@ class MineView(View):
         ctx.author = interaction.user
         await мои_ресурсы(ctx)
     
-    @discord.ui.button(label="💰 Продать", style=discord.ButtonStyle.gold, custom_id="sell")
+    @discord.ui.button(label="💰 Продать", style=discord.ButtonStyle.blurple, custom_id="sell")
     async def sell_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Напиши !продать_ресурсы или !продать_ресурсы уголь 10", ephemeral=True)
     
@@ -512,7 +512,7 @@ class OilBaseView(View):
     async def buy_oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Напиши !купить_нефть [количество]", ephemeral=True)
     
-    @discord.ui.button(label="💰 Продать", style=discord.ButtonStyle.gold, custom_id="sell_oil")
+    @discord.ui.button(label="💰 Продать", style=discord.ButtonStyle.blurple, custom_id="sell_oil")
     async def sell_oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Напиши !продать_нефть", ephemeral=True)
     
@@ -631,7 +631,7 @@ class TopView(View):
     def __init__(self):
         super().__init__(timeout=60)
     
-    @discord.ui.button(label="💰 По ауре", style=discord.ButtonStyle.gold, custom_id="top_aura")
+    @discord.ui.button(label="💰 По ауре", style=discord.ButtonStyle.blurple, custom_id="top_aura")
     async def aura_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
