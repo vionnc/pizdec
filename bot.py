@@ -331,7 +331,7 @@ class MainMenuView(View):
     async def weapons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("🔫 ОРУЖИЕ И ОГРАБЛЕНИЯ", view=WeaponsView(), ephemeral=True)
     
-    @discord.ui.button(label="🛢️ Нефтебаза", style=discord.ButtonStyle.orange, custom_id="oil")
+    @discord.ui.button(label="🛢️ Нефтебаза", discord.ButtonStyle.blurple, custom_id="oil")
     async def oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = str(interaction.user.id)
         oil_data = load_oilbases()
@@ -392,7 +392,7 @@ class BusinessView(View):
     async def buy_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Напиши !купить_бизнес [id]", ephemeral=True)
     
-    @discord.ui.button(label="💰 Собрать", style=discord.ButtonStyle.gold, custom_id="collect")
+    @discord.ui.button(label="💰 Собрать", style=discord.ButtonStyle.green, custom_id="collect")
     async def collect_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
@@ -467,7 +467,7 @@ class MineView(View):
         ctx.author = interaction.user
         await купить_кирку(ctx)
     
-    @discord.ui.button(label="📦 Ресурсы", style=discord.ButtonStyle.orange, custom_id="resources")
+    @discord.ui.button(label="📦 Ресурсы", style=discord.ButtonStyle.blurple, custom_id="resources")
     async def resources_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
@@ -508,7 +508,7 @@ class OilBaseView(View):
     async def upgrade_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Напиши !прокачать_базу", ephemeral=True)
     
-    @discord.ui.button(label="🛢️ Купить нефть", style=discord.ButtonStyle.orange, custom_id="buy_oil")
+    @discord.ui.button(label="🛢️ Купить нефть", style=discord.ButtonStyle.blurple, custom_id="buy_oil")
     async def buy_oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Напиши !купить_нефть [количество]", ephemeral=True)
     
