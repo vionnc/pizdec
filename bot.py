@@ -14,13 +14,11 @@ intents.message_content = True
 intents.voice_states = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-DATA_FILE = 'aura_data.json'
-INVENTORY_FILE = 'inventory_data.json'
-BUSINESS_FILE = 'business_data.json'
-OILBASE_FILE = 'oilbase_data.json'
-WEAPONS_FILE = 'weapons_data.json'
-MINE_FILE = 'mine_data.json'
-MUSIC_FOLDER = 'aura_phonk'
+DATA_FILE = '/app/aura_data.json'
+BUSINESS_FILE = '/app/business_data.json'
+OILBASE_FILE = '/app/oilbase_data.json'
+WEAPONS_FILE = '/app/weapons_data.json'
+MINE_FILE = '/app/mine_data.json'
 
 role_bonuses = {
     'Фонкер': {
@@ -1668,5 +1666,10 @@ async def on_ready():
     print(f'Целей для ограблений: {len(robbery_targets)}')
     print(f'Команды: !farm_panel, !balance, !передать, !топ, !казино, !налоговая, !бизнесы, !оружейка, !цели, !ограбить, !купить_нефтебазу, !моя_нефтебаза, !разведка, !ограбить_нефтебазу, !шахта, !купить_кирку, !мои_ресурсы, !продать_ресурсы, !прокачать_кирку, !меню')
     bot.loop.create_task(random_attack())
+# Тестовое сохранение при запуске
+test_data = {"test": "ok"}
+with open('aura_data.json', 'w') as f:
+    json.dump(test_data, f)
+print("✅ Тестовый файл создан")
 
 bot.run(os.getenv('TOKEN'))
