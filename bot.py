@@ -331,7 +331,7 @@ class MainMenuView(View):
     async def weapons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("🔫 ОРУЖИЕ И ОГРАБЛЕНИЯ", view=WeaponsView(), ephemeral=True)
     
-    @discord.ui.button(label="🛢️ Нефтебаза", style=discord.ButtonStyle.blurple, custom_id="oil")
+    @discord.ui.button(label="🛢️ Нефтебаза", style=discord.ButtonStyle.grey, custom_id="oil")
     async def oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = str(interaction.user.id)
         oil_data = load_oilbases()
@@ -340,7 +340,7 @@ class MainMenuView(View):
         else:
             await interaction.response.send_message("У тебя нет нефтебазы! Купи за 500к", view=BuyOilView(), ephemeral=True)
     
-    @discord.ui.button(label="⛏️ Шахта", style=discord.ButtonStyle.gray, custom_id="mine")
+    @discord.ui.button(label="⛏️ Шахта", style=discord.ButtonStyle.grey, custom_id="mine")
     async def mine_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("⛏️ ШАХТА", view=MineView(), ephemeral=True)
     
@@ -351,7 +351,7 @@ class MainMenuView(View):
             embed.add_field(name=item['name'], value=f"Цена: {item['price']} Aura\n{item['description']}", inline=False)
         await interaction.response.send_message(embed=embed, view=ShopView(), ephemeral=True)
     
-    @discord.ui.button(label="🎵 Музыка", style=discord.ButtonStyle.success, custom_id="music")
+    @discord.ui.button(label="🎵 Музыка", style=discord.ButtonStyle.green, custom_id="music")
     async def music_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("🎵 МУЗЫКА", view=MusicView(), ephemeral=True)
     
@@ -392,7 +392,7 @@ class BusinessView(View):
     async def buy_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Напиши !купить_бизнес [id]", ephemeral=True)
     
-    @discord.ui.button(label="💰 Собрать", style=discord.ButtonStyle.green, custom_id="collect")
+    @discord.ui.button(label="💰 Собрать", style=discord.ButtonStyle.gold, custom_id="collect")
     async def collect_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
@@ -428,7 +428,7 @@ class WeaponsView(View):
         ctx.author = interaction.user
         await моё_оружие(ctx)
     
-    @discord.ui.button(label="🎯 Цели", style=discord.ButtonStyle.orange, custom_id="targets")
+    @discord.ui.button(label="🎯 Цели", style=discord.ButtonStyle.grey, custom_id="targets")
     async def targets_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
@@ -467,7 +467,7 @@ class MineView(View):
         ctx.author = interaction.user
         await купить_кирку(ctx)
     
-    @discord.ui.button(label="📦 Ресурсы", style=discord.ButtonStyle.blurple, custom_id="resources")
+    @discord.ui.button(label="📦 Ресурсы", style=discord.ButtonStyle.grey, custom_id="resources")
     async def resources_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
@@ -508,7 +508,7 @@ class OilBaseView(View):
     async def upgrade_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Напиши !прокачать_базу", ephemeral=True)
     
-    @discord.ui.button(label="🛢️ Купить нефть", style=discord.ButtonStyle.blurple, custom_id="buy_oil")
+    @discord.ui.button(label="🛢️ Купить нефть", style=discord.ButtonStyle.grey, custom_id="buy_oil")
     async def buy_oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("Напиши !купить_нефть [количество]", ephemeral=True)
     
@@ -596,7 +596,7 @@ class MusicView(View):
         ctx.author = interaction.user
         await фонк(ctx)
     
-    @discord.ui.button(label="⏸️ Пауза", style=discord.ButtonStyle.gray, custom_id="pause")
+    @discord.ui.button(label="⏸️ Пауза", style=discord.ButtonStyle.grey, custom_id="pause")
     async def pause_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
@@ -643,7 +643,7 @@ class TopView(View):
         ctx.author = interaction.user
         await топ(ctx, "бизнесы")
     
-    @discord.ui.button(label="🛢️ По нефтебазам", style=discord.ButtonStyle.orange, custom_id="top_oil")
+    @discord.ui.button(label="🛢️ По нефтебазам", style=discord.ButtonStyle.grey, custom_id="top_oil")
     async def oil_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
@@ -655,7 +655,7 @@ class TopView(View):
         ctx.author = interaction.user
         await топ(ctx, "ограбления")
     
-    @discord.ui.button(label="⛏️ По шахте", style=discord.ButtonStyle.gray, custom_id="top_mine")
+    @discord.ui.button(label="⛏️ По шахте", style=discord.ButtonStyle.grey, custom_id="top_mine")
     async def mine_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         ctx = await bot.get_context(interaction.message)
         ctx.author = interaction.user
