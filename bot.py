@@ -1375,7 +1375,7 @@ async def мои_ресурсы(ctx):
     resources = mine_data[user_id]['resources']
     pickaxe = mine_data[user_id]['pickaxe']
     
-    embed = discord.Embed(title=f"Ресурсы {ctx.author.name}", color=discord.Color.brown())
+    embed = discord.Embed(title=f"Ресурсы {ctx.author.name}", color=discord.Color.blurple())
     embed.add_field(name="Кирка", value=f"{pickaxe_levels[pickaxe]['name']} ({pickaxe} ур.)", inline=False)
     
     res_list = ""
