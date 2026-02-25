@@ -14,11 +14,11 @@ intents.message_content = True
 intents.voice_states = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-DATA_FILE = '/app/aura_data.json'
-BUSINESS_FILE = '/app/business_data.json'
-OILBASE_FILE = '/app/oilbase_data.json'
-WEAPONS_FILE = '/app/weapons_data.json'
-MINE_FILE = '/app/mine_data.json'
+DATA_FILE = '/app/data/aura_data.json'
+BUSINESS_FILE = '/app/data/business_data.json'
+OILBASE_FILE = '/app/data/oilbase_data.json'
+WEAPONS_FILE = '/app/data/weapons_data.json'
+MINE_FILE = '/app/data/mine_data.json'
 
 role_bonuses = {
     'Фонкер': {
