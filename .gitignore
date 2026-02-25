@@ -4,3 +4,5 @@
 "aura_data.json" 
 "cookies.txt" 
 "cookies.txt" 
+*.json
+cookies.txt
